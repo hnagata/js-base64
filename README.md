@@ -31,8 +31,8 @@ utf8.decode(base64.decode("aG9nZQ=="))
 
 License
 -------
-Copyright (c) 2014 H. Nagatagit Licensed under the MIT license.
+Copyright (c) 2014 H. Nagata Licensed under the MIT license.
 
 This program is based on base64-arraybuffer. 
-https://github.com/niklasvh/base64-arraybuffer
+https://github.com/niklasvh/base64-arraybuffer  
 Copyright (c) 2012 Niklas von Hertzen Licensed under the MIT license.
