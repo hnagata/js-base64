@@ -23,7 +23,7 @@ base64.encode(utf8.encode("hoge"));
 /* Decoding */
 
 base64.decode("aG9nZQ==")
-// Returns ArrayBuffer
+// Returns Uint8Array
 
 utf8.decode(base64.decode("aG9nZQ=="))
 // Returns "hoge"
