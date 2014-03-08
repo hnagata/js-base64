@@ -1,104 +1,66 @@
 /*
-* net.hnagata.base64
+* js-base64
 * https://github.com/hnagata/js-base64
-* H. Nagata, 2014/03/06
-*
-* This program is based on base64-arraybuffer.
-* https://github.com/niklasvh/base64-arraybuffer
+* Copyright (c) 2014 H. Nagata
+* Licensed under the MIT license.
+* 
+* This program is based on base64-arraybuffer. 
+* https://github.com/niklasvh/base64-arraybuffer  
 * Copyright (c) 2012 Niklas von Hertzen
+* Licensed under the MIT license.
 */
 
-base64 = base64 || {};
+var base64 = base64 || (function() {
+  var chars = 
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-(function(lib) {
-  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\
-";
-
-  function str2buffer(str) {
-    var n = str.length,
-    idx = -1,
-    byteLength = n,
-    bytes = new Uint8Array(byteLength),
-    i, c, _bytes;
-
-    for(i = 0; i < n; ++i){
-      c = str.charCodeAt(i);
-      if(c <= 0x7F){
-        bytes[++idx] = c;
-      } else if(c <= 0x7FF){
-        bytes[++idx] = 0xC0 | (c >>> 6);
-        bytes[++idx] = 0x80 | (c & 0x3F);
-      } else if(c <= 0xFFFF){
-        bytes[++idx] = 0xE0 | (c >>> 12);
-        bytes[++idx] = 0x80 | ((c >>> 6) & 0x3F);
-        bytes[++idx] = 0x80 | (c & 0x3F);
-      } else {
-        bytes[++idx] = 0xF0 | (c >>> 18);
-        bytes[++idx] = 0x80 | ((c >>> 12) & 0x3F);
-        bytes[++idx] = 0x80 | ((c >>> 6) & 0x3F);
-        bytes[++idx] = 0x80 | (c & 0x3F);
-      }
-      if(byteLength - idx <= 4){
-        _bytes = bytes;
-        byteLength *= 2;
-        bytes = new Uint8Array(byteLength);
-        bytes.set(_bytes);
-      }
+  function encode(bytes) {
+		var i, len = bytes.byteLength, base64 = "", b1, b2, b3;
+    for (i = 0; i < len; i += 3) {
+			b1 = bytes[i];
+			b2 = bytes[i + 1];
+			b3 = bytes[i + 2];
+      base64 += chars[b1 >> 2];
+      base64 += chars[(b1 & 0x03) << 4 | b2 >> 4];
+      base64 += chars[(b2 & 0x0F) << 2 | b3 >> 6];
+      base64 += chars[b3 & 0x3F];
     }
-    return bytes.subarray(0, ++idx);
-  }
-
-  lib.encode = function(arraybuffer) {
-    if (typeof arraybuffer == "string") {
-      arraybuffer = str2buffer(arraybuffer);
-    }
-
-    var bytes = new Uint8Array(arraybuffer),
-    i, len = bytes.byteLength, base64 = "";
-
-    for (i = 0; i < len; i+=3) {
-      base64 += chars[bytes[i] >> 2];
-      base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
-      base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
-      base64 += chars[bytes[i + 2] & 63];
-    }
-
-    if ((len % 3) === 2) {
+    if (len % 3 == 2) {
       base64 = base64.substring(0, base64.length - 1) + "=";
-    } else if (len % 3 === 1) {
+    } else if (len % 3 == 1) {
       base64 = base64.substring(0, base64.length - 2) + "==";
     }
-
     return base64;
-  };
+  }
 
-  lib.decode = function(base64) {
-    var bufferLength = base64.length * 0.75,
-    len = base64.length, i, p = 0,
-    encoded1, encoded2, encoded3, encoded4;
-
+  function decode(base64) {
+    var byteLength = base64.length * 0.75,
+    len = base64.length, i, p = 0, c1, c2, c3, c4;
     if (base64[base64.length - 1] === "=") {
-      bufferLength--;
+      --byteLength;
       if (base64[base64.length - 2] === "=") {
-        bufferLength--;
+        --byteLength;
       }
     }
-
-    var arraybuffer = new ArrayBuffer(bufferLength),
-    bytes = new Uint8Array(arraybuffer);
-
-    for (i = 0; i < len; i+=4) {
-      encoded1 = chars.indexOf(base64[i]);
-      encoded2 = chars.indexOf(base64[i+1]);
-      encoded3 = chars.indexOf(base64[i+2]);
-      encoded4 = chars.indexOf(base64[i+3]);
-
-      bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
-      bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
-      bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+		var bytes = new Uint8Array(byteLength);
+    for (i = 0; i < len; i += 4) {
+      c1 = chars.indexOf(base64[i]);
+      c2 = chars.indexOf(base64[i + 1]);
+      c3 = chars.indexOf(base64[i + 2]);
+      c4 = chars.indexOf(base64[i + 3]);
+			if (c1 >= 0xC0 || c2 >= 0xC0 || c3 >= 0xC0 || c4 >= 0xC0) {
+				throw "Illegal base64 character";
+			}
+      bytes[p++] = (c1 << 2) | (c2 >> 4);
+      bytes[p++] = ((c2 & 0x0F) << 4) | (c3 >> 2);
+      bytes[p++] = ((c3 & 0x03) << 6) | (c4 & 0x3F);
     }
+		return bytes;
+  }
 
-    return arraybuffer;
-  };
-})(base64);
+	return {
+		encode: encode,
+		decode: decode
+	};
+})();
 
